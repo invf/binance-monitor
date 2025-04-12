@@ -6,30 +6,25 @@ from ta.momentum import RSIIndicator
 from binance.client import Client
 from binance.enums import KLINE_INTERVAL_15MINUTE, KLINE_INTERVAL_1HOUR, KLINE_INTERVAL_4HOUR
 import requests
-from dotenv import load_dotenv
 from collections import defaultdict
 import logging
 import threading
 
-# === CLEAR LOG FILE ON START ===
-with open("signals.log", "w") as f:
-    f.write("")
-
-# === LOGGING SETUP ===
+# === LOGGING SETUP (для Render) ===
 logging.basicConfig(
-    filename="signals.log",
     level=logging.INFO,
     format='%(asctime)s | %(levelname)s | %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[logging.StreamHandler()]  # тільки вивід у консоль
 )
 
-# === LOAD ENV VARIABLES ===
-load_dotenv()
+print("🚀 Binance + Telegram bot is starting...")
 
-API_KEY = os.getenv("BINANCE_API_KEY")
-API_SECRET = os.getenv("BINANCE_SECRET")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = int(os.getenv("TELEGRAM_CHAT_ID"))
+# === LOAD ENV VARIABLES (через Render) ===
+API_KEY = os.environ["BINANCE_API_KEY"]
+API_SECRET = os.environ["BINANCE_SECRET"]
+TELEGRAM_BOT_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+TELEGRAM_CHAT_ID = int(os.environ["TELEGRAM_CHAT_ID"])
 
 RSI_15M_THRESHOLD = 50
 RSI_1H_THRESHOLD = 50
@@ -82,9 +77,7 @@ def send_telegram_message(token, chat_id, message, reply_markup=None):
         response = requests.post(url, json=payload)
         response.raise_for_status()
     except requests.RequestException as e:
-        print(f"Telegram error: {e}")
-        print(f"Payload: {json.dumps(payload, ensure_ascii=False)}")
-        logging.error(f"Failed to send message: {e} | Payload: {json.dumps(payload, ensure_ascii=False)}")
+        logging.error(f"Telegram error: {e} | Payload: {json.dumps(payload, ensure_ascii=False)}")
 
 def telegram_listener():
     global RSI_15M_THRESHOLD, RSI_1H_THRESHOLD, PRICE_DROP_THRESHOLD, STARTED
@@ -142,19 +135,11 @@ def telegram_listener():
                             val = int(callback_data.split("_")[1])
                             RSI_15M_THRESHOLD = val
                             RSI_1H_THRESHOLD = val
-                            send_telegram_message(
-                                TELEGRAM_BOT_TOKEN,
-                                chat_id,
-                                f"✅ RSI thresholds updated to < {val}"
-                            )
+                            send_telegram_message(TELEGRAM_BOT_TOKEN, chat_id, f"✅ RSI thresholds updated to < {val}")
                         elif callback_data.startswith("price_drop_"):
                             val = float(callback_data.split("_")[2])
                             PRICE_DROP_THRESHOLD = val
-                            send_telegram_message(
-                                TELEGRAM_BOT_TOKEN,
-                                chat_id,
-                                f"✅ Price drop threshold updated to < -{val}%"
-                            )
+                            send_telegram_message(TELEGRAM_BOT_TOKEN, chat_id, f"✅ Price drop threshold updated to < -{val}%")
                         elif callback_data == "start":
                             STARTED = True
                             send_telegram_message(
@@ -173,7 +158,7 @@ def telegram_listener():
                             )
 
         except Exception as e:
-            print(f"[Telegram Listener] Error: {e}")
+            logging.error(f"[Telegram Listener] Error: {e}")
             time.sleep(5)
 
 def check_all():
@@ -238,6 +223,7 @@ def check_all():
             print(error_msg)
             logging.error(error_msg)
 
+# === START ===
 threading.Thread(target=telegram_listener, daemon=True).start()
 
 while True:
