@@ -87,10 +87,10 @@ def telegram_listener():
     reply_markup = {
         "inline_keyboard": [
             [
-                {"text": "RSI < 40", "callback_data": "rsi_40"},
-                {"text": "RSI < 50", "callback_data": "rsi_50"},
-                {"text": "RSI < 60", "callback_data": "rsi_60"},
-                {"text": "RSI < 70", "callback_data": "rsi_70"}
+                {"text": "RSI > 40", "callback_data": "rsi_40"},
+                {"text": "RSI > 50", "callback_data": "rsi_50"},
+                {"text": "RSI > 60", "callback_data": "rsi_60"},
+                {"text": "RSI > 70", "callback_data": "rsi_70"}
             ],
             [
                 {"text": "Price Drop < -0.5%", "callback_data": "price_drop_0.5"},
@@ -186,8 +186,8 @@ def check_all():
                 price_4h < 0,
                 (volume_1h is not None and volume_1h < 0),
                 (volume_4h is not None and volume_4h < 0),
-                rsi_15m < RSI_15M_THRESHOLD,
-                rsi_1h < RSI_1H_THRESHOLD
+                rsi_15m > RSI_15M_THRESHOLD,
+                rsi_1h > RSI_1H_THRESHOLD
             ]):
                 signal_counter[symbol] += 1
             else:
@@ -212,8 +212,8 @@ def check_all():
   • 4г: {volume_4h}%
 
 📉 RSI:
-  • 15м: {rsi_15m} (threshold: <{RSI_15M_THRESHOLD})
-  • 1г: {rsi_1h} (threshold: <{RSI_1H_THRESHOLD})
+  • 15м: {rsi_15m} (threshold: >{RSI_15M_THRESHOLD})
+  • 1г: {rsi_1h} (threshold: >{RSI_1H_THRESHOLD})
 """
                 send_telegram_message(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, msg.strip())
                 signal_counter[symbol] = 0
