@@ -198,7 +198,7 @@ def check_all():
                 print(log_msg)
                 logging.info(log_msg)
 
-            if signal_counter[symbol] >= 3:
+            if signal_counter[symbol] >= 1:
                 msg = f"""
 📊 {symbol}
 📈 Зміна ціни:
