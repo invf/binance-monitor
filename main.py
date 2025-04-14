@@ -40,7 +40,6 @@ MONITOR_DURATION = 2 * 60 * 60  # 2 hours
 
 signal_triggered = set()
 
-
 def get_klines(symbol, interval):
     return client.get_klines(symbol=symbol, interval=interval, limit=LIMIT)
 
@@ -194,7 +193,9 @@ def monitor_symbol(symbol):
 💧 Volume Change:
  • 1h: {volume_1h}%
  • 4h: {volume_4h}%
-✅ Signal confirmed during 2h monitoring.
+📉 RSI:
+ • 15m RSI: {calculate_rsi(k_15m)} (threshold: >{RSI_15M_THRESHOLD})
+ • 1h RSI: {calculate_rsi(k_1h)} (threshold: >{RSI_1H_THRESHOLD})
 """
                 send_telegram_message(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, msg.strip())
                 break
@@ -215,6 +216,15 @@ def check_all():
 
             if rsi_15m > RSI_15M_THRESHOLD and rsi_1h > RSI_1H_THRESHOLD:
                 signal_triggered.add(symbol)
+
+                msg = f"""
+📊 {symbol} - RSI signal triggered
+📉 RSI Values:
+ • 15m RSI: {rsi_15m} (threshold: >{RSI_15M_THRESHOLD})
+ • 1h RSI: {rsi_1h} (threshold: >{RSI_1H_THRESHOLD})
+"""
+                send_telegram_message(TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, msg.strip())
+
                 threading.Thread(target=monitor_symbol, args=(symbol,), daemon=True).start()
                 logging.info(f"🎯 Triggered RSI check: {symbol} | RSI(15m): {rsi_15m} | RSI(1h): {rsi_1h}")
         except Exception as e:
